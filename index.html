@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw — Automation Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+--bg: #080b12;
+--surface: #0d1220;
+--surface2: #111827;
+--border: rgba(255,255,255,0.07);
+--accent: #00e5ff;
+--accent2: #7c3aed;
+--accent3: #f59e0b;
+--accent4: #10b981;
+--accent5: #f43f5e;
+--text: #e2e8f0;
+--muted: #64748b;
+--glow: rgba(0,229,255,0.15);
+}
+html { scroll-behavior: smooth; }
+body {
+background: var(--bg);
+color: var(--text);
+font-family: 'DM Sans', sans-serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+/* BACKGROUND */
+body::before {
+content: '';
+position: fixed;
+inset: 0;
+background:
+radial-gradient(ellipse 80% 50% at 10% 0%, rgba(0,229,255,0.06) 0%, transparent 60%),
+radial-gradient(ellipse 60% 40% at 90% 100%, rgba(124,58,237,0.08) 0%, transparent 60%);
+pointer-events: none;
+z-index: 0;
+}
+/* GRID OVERLAY */
+body::after {
+content: '';
+position: fixed;
+inset: 0;
+background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: 0;
+}
+/* ===== HEADER ===== */
+header {
+position: relative;
+z-index: 10;
+padding: 28px 48px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+border-bottom: 1px solid var(--border);
+backdrop-filter: blur(12px);
+background: rgba(8,11,18,0.7);
+position: sticky;
+top: 0;
+}
+.logo {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+.logo-icon {
+width: 36px;
+height: 36px;
+background: linear-gradient(135deg, var(--accent), var(--accent2));
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 18px;
+font-family: 'Syne', sans-serif;
+font-weight: 800;
+color: #000;
+}
+.logo-text {
+font-family: 'Syne', sans-serif;
+font-weight: 800;
+font-size: 20px;
+letter-spacing: -0.5px;
+}
+.logo-text span { color: var(--accent); }
+.header-right {
+display: flex;
+align-items: center;
+gap: 20px;
+}
+.status-pill {
+display: flex;
+align-items: center;
+gap: 8px;
+background: rgba(16,185,129,0.1);
+border: 1px solid rgba(16,185,129,0.3);
+padding: 6px 14px;
+border-radius: 20px;
+font-size: 12px;
+font-family: 'DM Mono', monospace;
+color: var(--accent4);
+}
+.status-dot {
+width: 7px;
+height: 7px;
+background: var(--accent4);
+border-radius: 50%;
+animation: pulse 2s infinite;
+}
+@keyframes pulse {
+0%, 100% { opacity: 1; transform: scale(1); }
+50% { opacity: 0.5; transform: scale(0.8); }
+}
+.date-label {
+font-family: 'DM Mono', monospace;
+font-size: 11px;
+color: var(--muted);
+}
+/* ===== LAYOUT ===== */
+main {
+position: relative;
+z-index: 1;
+max-width: 1400px;
+margin: 0 auto;
+padding: 40px 48px 80px;
+}
+/* ===== SECTION TITLES ===== */
+.section-header {
+display: flex;
+align-items: center;
+gap: 14px;
+margin-bottom: 24px;
+margin-top: 48px;
+}
+.section-header:first-of-type { margin-top: 0; }
+.section-tag {
+font-family: 'DM Mono', monospace;
+font-size: 10px;
+letter-spacing: 2px;
+text-transform: uppercase;
+color: var(--accent);
+background: rgba(0,229,255,0.08);
+border: 1px solid rgba(0,229,255,0.2);
+padding: 4px 10px;
+border-radius: 4px;
+}
+.section-title {
+font-family: 'Syne', sans-serif;
+font-size: 22px;
+font-weight: 700;
+color: var(--text);
+}
+.section-line {
+flex: 1;
+height: 1px;
+background: var(--border);
+}
+/* ===== STATS ROW ===== */
+.stats-row {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 14px;
+margin-bottom: 48px;
+}
+.stat-card {
+background: var(--surface);
+border: 1px solid var(--border);
+border-radius: 14px;
+padding: 20px;
+position: relative;
+overflow: hidden;
+transition: border-color 0.2s, transform 0.2s;
+cursor: default;
+}
+.stat-card:hover {
+border-color: rgba(0,229,255,0.3);
+transform: translateY(-2px);
+}
+.stat-card::before {
+content: '';
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 2px;
+background: var(--c, var(--accent));
+border-radius: 14px 14px 0 0;
+}
+.stat-label {
+font-family: 'DM Mono', monospace;
+font-size: 10px;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(--muted);
+margin-bottom: 10px;
+}
+.stat-value {
+font-family: 'Syne', sans-serif;
+font-size: 32px;
+font-weight: 800;
+line-height: 1;
+color: var(--c, var(--accent));
+margin-bottom: 4px;
+}
+.stat-sub {
+font-size: 11px;
+color: var(--muted);
+}
+/* ===== WORKSPACE TABS ===== */
+.tab-row {
+display: flex;
+gap: 8px;
+margin-bottom: 28px;
+flex-wrap: wrap;
+}
+.tab-btn {
+padding: 8px 18px;
+border-radius: 8px;
+font-family: 'DM Sans', sans-serif;
+font-size: 13px;
+font-weight: 500;
+cursor: pointer;
+border: 1px solid var(--border);
+background: transparent;
+color: var(--muted);
+transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+.tab-btn.active {
+background: rgba(0,229,255,0.1);
+border-color: rgba(0,229,255,0.4);
+color: var(--accent);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+/* ===== AGENT GRID ===== */
+.agent-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 16px;
+}
+.agent-card {
+background: var(--surface);
+border: 1px solid var(--border);
+border-radius: 16px;
+padding: 22px;
+position: relative;
+overflow: hidden;
+transition: all 0.25s;
+cursor: default;
+}
+.agent-card:hover {
+border-color: rgba(0,229,255,0.25);
+background: var(--surface2);
+transform: translateY(-3px);
+box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+.agent-card-accent {
+position: absolute;
+top: 0; left: 0; bottom: 0;
+width: 3px;
+background: var(--c, var(--accent));
+border-radius: 16px 0 0 16px;
+}
+.agent-header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+margin-bottom: 14px;
+}
+.agent-channel {
+font-family: 'DM Mono', monospace;
+font-size: 11px;
+color: var(--c, var(--accent));
+background: rgba(0,229,255,0.07);
+border: 1px solid rgba(0,229,255,0.15);
+padding: 3px 9px;
+border-radius: 4px;
+letter-spacing: 0.5px;
+}
+.agent-badge {
+font-family: 'DM Mono', monospace;
+font-size: 10px;
+padding: 3px 9px;
+border-radius: 4px;
+letter-spacing: 0.5px;
+}
+.badge-cron { background: rgba(245,158,11,0.1); color: var(--accent3); border: 1px solid rgba(245,158,11,0.25); }
+.badge-heartbeat { background: rgba(124,58,237,0.1); color: #a78bfa; border: 1px solid rgba(124,58,237,0.25); }
+.badge-manual { background: rgba(100,116,139,0.1); color: var(--muted); border: 1px solid rgba(100,116,139,0.2); }
+.agent-name {
+font-family: 'Syne', sans-serif;
+font-size: 15px;
+font-weight: 700;
+margin-bottom: 8px;
+}
+.agent-desc {
+font-size: 13px;
+color: var(--muted);
+line-height: 1.6;
+margin-bottom: 16px;
+}
+.agent-tasks {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.task-item {
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 12px;
+color: #94a3b8;
+padding: 7px 10px;
+background: rgba(255,255,255,0.03);
+border-radius: 7px;
+border: 1px solid rgba(255,255,255,0.04);
+}
+.task-icon { font-size: 13px; flex-shrink: 0; }
+.cron-tag {
+margin-left: auto;
+font-family: 'DM Mono', monospace;
+font-size: 10px;
+color: var(--accent3);
+flex-shrink: 0;
+}
+/* ===== CRON SCHEDULE TABLE ===== */
+.schedule-table {
+background: var(--surface);
+border: 1px solid var(--border);
+border-radius: 16px;
+overflow: hidden;
+}
+.schedule-table table {
+width: 100%;
+border-collapse: collapse;
+}
+.schedule-table th {
+text-align: left;
+padding: 14px 20px;
+font-family: 'DM Mono', monospace;
+font-size: 10px;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(--muted);
+background: rgba(255,255,255,0.02);
+border-bottom: 1px solid var(--border);
+}
+.schedule-table td {
+padding: 13px 20px;
+font-size: 13px;
+border-bottom: 1px solid rgba(255,255,255,0.03);
+vertical-align: middle;
+}
+.schedule-table tr:last-child td { border-bottom: none; }
+.schedule-table tr:hover td { background: rgba(255,255,255,0.02); }
+.cron-code {
+font-family: 'DM Mono', monospace;
+font-size: 12px;
+color: var(--accent);
+background: rgba(0,229,255,0.07);
+padding: 3px 8px;
+border-radius: 4px;
+}
+.freq-badge {
+display: inline-flex;
+align-items: center;
+gap: 5px;
+padding: 3px 10px;
+border-radius: 20px;
+font-size: 11px;
+font-weight: 500;
+}
+.freq-daily { background: rgba(16,185,129,0.1); color: var(--accent4); }
+.freq-weekly { background: rgba(0,229,255,0.1); color: var(--accent); }
+.freq-monthly { background: rgba(245,158,11,0.1); color: var(--accent3); }
+.freq-twice { background: rgba(124,58,237,0.1); color: #a78bfa; }
+.freq-3x { background: rgba(244,63,94,0.1); color: #fb7185; }
+/* ===== TIMELINE / WEEK VIEW ===== */
+.week-view {
+background: var(--surface);
+border: 1px solid var(--border);
+border-radius: 16px;
+padding: 24px;
+overflow-x: auto;
+}
+.week-grid {
+display: grid;
+grid-template-columns: 120px repeat(7, 1fr);
+gap: 0;
+min-width: 700px;
+}
+.week-header {
+text-align: center;
+padding: 10px 6px;
+font-family: 'DM Mono', monospace;
+font-size: 11px;
+letter-spacing: 1px;
+text-transform: uppercase;
+color: var(--muted);
+}
+.week-label {
+font-size: 12px;
+color: var(--muted);
+display: flex;
+align-items: center;
+padding: 6px 0;
+border-top: 1px solid var(--border);
+}
+.week-cell {
+border-top: 1px solid var(--border);
+border-left: 1px solid rgba(255,255,255,0.03);
+padding: 4px;
+min-height: 48px;
+display: flex;
+flex-direction: column;
+gap: 3px;
+}
+.week-event {
+padding: 3px 7px;
+border-radius: 5px;
+font-size: 10px;
+font-weight: 500;
+line-height: 1.3;
+cursor: default;
+transition: opacity 0.2s;
+}
+.week-event:hover { opacity: 0.8; }
+.ev-social { background: rgba(0,229,255,0.15); color: var(--accent); }
+.ev-job { background: rgba(16,185,129,0.15); color: var(--accent4); }
+.ev-partner { background: rgba(245,158,11,0.15); color: var(--accent3); }
+.ev-content { background: rgba(124,58,237,0.15); color: #a78bfa; }
+.ev-community { background: rgba(244,63,94,0.15); color: #fb7185; }
+.ev-news { background: rgba(100,116,139,0.15); color: #94a3b8; }
+/* ===== HEARTBEAT SECTION ===== */
+.heartbeat-card {
+background: var(--surface);
+border: 1px solid rgba(124,58,237,0.25);
+border-radius: 16px;
+padding: 28px;
+position: relative;
+overflow: hidden;
+}
+.heartbeat-card::before {
+content: '';
+position: absolute;
+inset: 0;
+background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(124,58,237,0.08), transparent);
+pointer-events: none;
+}
+.heartbeat-title {
+font-family: 'Syne', sans-serif;
+font-size: 18px;
+font-weight: 700;
+display: flex;
+align-items: center;
+gap: 10px;
+margin-bottom: 6px;
+}
+.heartbeat-icon {
+width: 32px; height: 32px;
+background: rgba(124,58,237,0.2);
+border: 1px solid rgba(124,58,237,0.4);
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 15px;
+animation: heartbeat 1.5s ease infinite;
+}
+@keyframes heartbeat {
+0%,100% { transform: scale(1); }
+15% { transform: scale(1.15); }
+30% { transform: scale(1); }
+45% { transform: scale(1.08); }
+}
+.heartbeat-sub {
+font-size: 13px;
+color: var(--muted);
+margin-bottom: 20px;
+}
+.checklist {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 10px;
+}
+.check-item {
+display: flex;
+align-items: flex-start;
+gap: 10px;
+padding: 12px 14px;
+background: rgba(255,255,255,0.02);
+border: 1px solid rgba(255,255,255,0.05);
+border-radius: 10px;
+font-size: 13px;
+color: #94a3b8;
+}
+.check-num {
+width: 20px; height: 20px;
+background: rgba(124,58,237,0.2);
+border: 1px solid rgba(124,58,237,0.4);
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-family: 'DM Mono', monospace;
+font-size: 10px;
+color: #a78bfa;
+flex-shrink: 0;
+margin-top: 1px;
+}
+/* ===== APPROVAL FLOW ===== */
+.flow-card {
+background: var(--surface);
+border: 1px solid var(--border);
+border-radius: 16px;
+padding: 28px;
+}
+.flow-steps {
+display: flex;
+align-items: flex-start;
+gap: 0;
+overflow-x: auto;
+padding-bottom: 8px;
+}
+.flow-step {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 10px;
+flex: 1;
+min-width: 130px;
+position: relative;
+}
+.flow-step:not(:last-child)::after {
+content: '→';
+position: absolute;
+right: -10px;
+top: 18px;
+color: var(--muted);
+font-size: 16px;
+z-index: 1;
+}
+.flow-circle {
+width: 48px; height: 48px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 20px;
+flex-shrink: 0;
+}
+.flow-step-label {
+font-size: 12px;
+font-weight: 600;
+text-align: center;
+color: var(--text);
+}
+.flow-step-sub {
+font-size: 11px;
+color: var(--muted);
+text-align: center;
+line-height: 1.4;
+}
+/* ===== MEMORY/FILES ===== */
+.files-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 12px;
+}
+.file-card {
+background: var(--surface);
+border: 1px solid var(--border);
+border-radius: 12px;
+padding: 18px;
+transition: all 0.2s;
+cursor: default;
+}
+.file-card:hover {
+border-color: rgba(0,229,255,0.25);
+transform: translateY(-2px);
+}
+.file-icon { font-size: 24px; margin-bottom: 10px; }
+.file-name {
+font-family: 'DM Mono', monospace;
+font-size: 12px;
+font-weight: 500;
+color: var(--accent);
+margin-bottom: 6px;
+}
+.file-desc {
+font-size: 12px;
+color: var(--muted);
+line-height: 1.5;
+}
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1100px) {
+main { padding: 32px 24px 60px; }
+header { padding: 20px 24px; }
+.agent-grid { grid-template-columns: repeat(2, 1fr); }
+.stats-row { grid-template-columns: repeat(3, 1fr); }
+.files-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px) {
+.agent-grid { grid-template-columns: 1fr; }
+.stats-row { grid-template-columns: repeat(2, 1fr); }
+.checklist { grid-template-columns: 1fr; }
+.files-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* ===== ANIMATIONS ===== */
+.fade-in {
+opacity: 0;
+transform: translateY(14px);
+animation: fadeIn 0.5s forwards;
+}
+@keyframes fadeIn {
+to { opacity: 1; transform: translateY(0); }
+}
+.agent-card:nth-child(1) { animation-delay: 0.05s; }
+.agent-card:nth-child(2) { animation-delay: 0.1s; }
+.agent-card:nth-child(3) { animation-delay: 0.15s; }
+.agent-card:nth-child(4) { animation-delay: 0.2s; }
+.agent-card:nth-child(5) { animation-delay: 0.25s; }
+.agent-card:nth-child(6) { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+<!-- HEADER -->
+<header>
+<div class="logo">
+<div class="logo-icon">⚡</div>
+<div class="logo-text">Open<span>Claw</span> Dashboard</div>
+</div>
+<div class="header-right">
+<div class="status-pill">
+<div class="status-dot"></div>
+All Agents Active
+</div>
+<div class="date-label" id="date-label"></div>
+</div>
+</header>
+<main>
+<!-- STATS -->
+<div class="stats-row">
+<div class="stat-card" style="--c: var(--accent)">
+<div class="stat-label">Total Channels</div>
+<div class="stat-value">16</div>
+<div class="stat-sub">Discord agents</div>
+</div>
+<div class="stat-card" style="--c: var(--accent3)">
+<div class="stat-label">Cron Jobs</div>
+<div class="stat-value">14</div>
+<div class="stat-sub">Scheduled tasks</div>
+</div>
+<div class="stat-card" style="--c: #a78bfa">
+<div class="stat-label">Heartbeat</div>
+<div class="stat-value">30m</div>
+<div class="stat-sub">Check interval</div>
+</div>
+<div class="stat-card" style="--c: var(--accent4)">
+<div class="stat-label">Daily Actions</div>
+<div class="stat-value">30+</div>
+<div class="stat-sub">Automated tasks</div>
+</div>
+<div class="stat-card" style="--c: var(--accent5)">
+<div class="stat-label">Workspaces</div>
+<div class="stat-value">4</div>
+<div class="stat-sub">Personal · 3 orgs</div>
+</div>
+</div>
+<!-- WORKSPACE TABS -->
+<div class="section-header">
+<span class="section-tag">Workspaces</span>
+<span class="section-title">Agent Channels</span>
+<div class="section-line"></div>
+</div>
+<div class="tab-row">
+<button class="tab-btn active" onclick="switchTab('personal')">👤 Glory Justin</button>
+<button class="tab-btn" onclick="switchTab('africinnovate')">🌍 Africinnovate</button>
+<button class="tab-btn" onclick="switchTab('gdg')">🐾 GDG Eket</button>
+<button class="tab-btn" onclick="switchTab('wtm')">💜 WTM Eket</button>
+<button class="tab-btn" onclick="switchTab('eth')">⟠ EthAkwaIbom</button>
+</div>
+<!-- PERSONAL -->
+<div id="tab-personal" class="tab-content active">
+<div class="agent-grid">
+  <div class="agent-card fade-in" style="--c: var(--accent)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel">#personal-social-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">Daily Social Media</div>
+    <div class="agent-desc">Posts tailored content across all platforms every morning at 8AM WAT.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🐦</span> Twitter <span class="cron-tag">0 8 * * *</span></div>
+      <div class="task-item"><span class="task-icon">📘</span> Facebook</div>
+      <div class="task-item"><span class="task-icon">📸</span> Instagram</div>
+      <div class="task-item"><span class="task-icon">🎵</span> TikTok</div>
+      <div class="task-item"><span class="task-icon">💼</span> LinkedIn</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: #a78bfa">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(124,58,237,0.07);border-color:rgba(124,58,237,0.2);color:#a78bfa">#youtube-content-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">YouTube Content</div>    <div class="agent-desc">Plans, scripts, and structures video content twice weekly.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🎬</span> Title + Hook <span class="cron-tag">0 7 * * 1</span></div>
+      <div class="task-item"><span class="task-icon">📋</span> Outline + Talking Points <span class="cron-tag">0 7 * * 4</span></div>
+      <div class="task-item"><span class="task-icon">📅</span> Monday & Thursday</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: var(--accent4)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(16,185,129,0.07);border-color:rgba(16,185,129,0.2);color:var(--accent4)">#job-application-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">Daily Job Search</div>
+    <div class="agent-desc">Searches and applies to 10 remote global roles daily at 9AM WAT.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">⛓️</span> Blockchain / Protocol Engineer <span class="cron-tag">0 9 * * *</span></div>
+      <div class="task-item"><span class="task-icon">✍️</span> Technical Writer</div>
+      <div class="task-item"><span class="task-icon">💻</span> Fullstack / Backend</div>
+      <div class="task-item"><span class="task-icon">🛠️</span> DevOps / Software Engineer</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: var(--accent3)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(245,158,11,0.07);border-color:rgba(245,158,11,0.2);color:var(--accent3)">#phd-application-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">PhD Applications</div>
+    <div class="agent-desc">Finds 10 fully-funded CS PhD programs in the US monthly. Tailors and submits applications.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🎓</span> Fully-funded US CS programs <span class=\"cron-tag\">0 9 1 * *</span></div>
+      <div class="task-item"><span class="task-icon">📝</span> Tailored application drafts</div>
+      <div class="task-item"><span class="task-icon">✅</span> Review before submit</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: var(--accent)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel">#technical-writing-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">Weekly Blog Post</div>
+    <div class="agent-desc">Drafts weekly posts on blockchain, dev tools, and Africa tech for Substack/Medium.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">📝</span> 800–1200 word draft <span class="cron-tag">0 7 * * 1</span></div>
+      <div class="task-item"><span class="task-icon">🌐</span> Substack / Medium / Blog</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: #94a3b8\">
+    <div class="agent-card-accent" style="background:#94a3b8"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(148,163,184,0.07);border-color:rgba(148,163,184,0.2);color:#94a3b8\">#dev-agent</div>
+      <div class="agent-badge badge-manual\">MANUAL</div>
+    </div>
+    <div class="agent-name">Coding Assistant</div>
+    <div class="agent-desc">Assists with feature implementation across active projects on demand.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🚗</span> Movveride</div>
+      <div class="task-item"><span class="task-icon">🌍</span> Africinnovate Website</div>
+      <div class="task-item"><span class="task-icon">📊</span> DuceCRM</div>
+    </div>
+  </div>
+</div>
+</div>
+<!-- AFRICINNOVATE -->
+<div id="tab-africinnovate" class="tab-content">
+<div class="agent-grid">
+  <div class="agent-card fade-in" style="--c: var(--accent3)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(245,158,11,0.07);border-color:rgba(245,158,11,0.2);color:var(--accent3)">#africinnovate-partnerships-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">Web2/Web3 Partnerships</div>
+    <div class="agent-desc">Searches 10 companies daily for workshop/training partnerships. Drafts proposals for review.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🔍</span> 10 companies/day <span class="cron-tag">0 9 * * 1-5</span></div>
+      <div class="task-item"><span class="task-icon">📄</span> Proposal → review → send</div>
+      <div class="task-item"><span class="task-icon">📊</span> Updates outreach spreadsheet</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: var(--accent)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel">#africinnovate-schools-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">School Website Outreach</div>
+    <div class="agent-desc">Finds 10 schools daily with social media but no website. Drafts and sends proposals.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🏫</span> 10 schools/day <span class="cron-tag">0 9 * * 1-5</span></div>
+      <div class="task-item"><span class="task-icon">📘</span> Has FB, no website</div>
+      <div class="task-item"><span class="task-icon">📧</span> Proposal → review → send</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: var(--accent4)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(16,185,129,0.07);border-color:rgba(16,185,129,0.2);color:var(--accent4)">#africinnovate-business-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">Google My Business Leads</div>
+    <div class="agent-desc">Finds 10 businesses daily on GMB without website/social. Builds temp site demo. Sends proposal.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🏢</span> 10 businesses/day <span class="cron-tag">0 9 * * 1-5</span></div>
+      <div class="task-item"><span class="task-icon">🌐</span> Builds temp website demo</div>
+      <div class="task-item"><span class="task-icon">📞</span> Gets contact for follow-up</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: #a78bfa">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(124,58,237,0.07);border-color:rgba(124,58,237,0.2);color:#a78bfa">#africinnovate-industrial-training-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">Industrial Training Partners</div>
+    <div class="agent-desc">Reaches out to 10 higher institutions daily for student IT placement with Africinnovate.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🎓</span> 10 institutions/day <span class="cron-tag">0 9 * * 1-5</span></div>
+      <div class="task-item"><span class="task-icon">🤝</span> IT partnership proposals</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: var(--accent5)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(244,63,94,0.07);border-color:rgba(244,63,94,0.2);color:#fb7185\">#africinnovate-social-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">Social Media (3×/week)</div>
+    <div class="agent-desc">Posts branded content to all platforms Mon/Wed/Fri with custom flier per post.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">📣</span> Twitter, FB, IG, LinkedIn <span class="cron-tag">0 8 * * 1,3,5</span></div>
+      <div class="task-item"><span class="task-icon">🎨</span> Branded flier per post</div>
+    </div>
+  </div>
+
+  <div class="agent-card fade-in" style="--c: var(--accent3)">
+    <div class="agent-card-accent"></div>
+    <div class="agent-header">
+      <div class="agent-channel" style="background:rgba(245,158,11,0.07);border-color:rgba(245,158,11,0.2);color:var(--accent3)">#africinnovate-events-agent</div>
+      <div class="agent-badge badge-cron">CRON</div>
+    </div>
+    <div class="agent-name">Events & Newsletter</div>
+    <div class="agent-desc">Monthly event planning at zero cost — virtual or physical. Reaches out to speakers. Monthly Substack.</div>
+    <div class="agent-tasks">
+      <div class="task-item"><span class="task-icon">🗓️</span> Monthly event plan <span class="cron-tag">0 9 1 * *</span></div>
+      <div class="task-item"><span class="task-icon">🎙️</span> Speaker outreach</div>
+      <div class="task-item"><span class="task-icon">📰</span> Monthly newsletter</div>
+    </div>
+  </div>
+</div>
+</div>
+<!-- GDG -->
+<div id="tab-gdg" class="tab-content">
+<div class="agent-grid">
+<div class="agent-card fade-in" style="--c: #4ade80">
+<div class="agent-card-accent" style="background:#4ade80"></div>
+<div class="agent-header">
+<div class="agent-channel" style="background:rgba(74,222,128,0.07);border-color:rgba(74,222,128,0.2);color:#4ade80">#gdgeket-agent</div>
+<div class="agent-badge badge-cron">CRON</div>
+</div>
+<div class="agent-name">Social Content (3×/week)</div>
+<div class="agent-desc">Creates branded GDG Eket posts across all platforms Mon/Wed/Fri with unique community fliers.</div>
+<div class="agent-tasks">
+<div class="task-item"><span class="task-icon">🐦</span> Twitter, FB, IG, LinkedIn <span class="cron-tag">0 8 * * 1,3,5</span></div>
+<div class="task-item"><span class="task-icon">🎨</span> GDG-branded flier each post</div>
+</div>
+</div>
+<div class="agent-card fade-in" style="--c: #4ade80">
+<div class="agent-card-accent" style="background:#4ade80"></div>
+<div class="agent-header">
+<div class="agent-channel" style="background:rgba(74,222,128,0.07);border-color:rgba(74,222,128,0.2);color:#4ade80">#gdgeket-events-agent</div>
+<div class="agent-badge badge-cron">CRON</div>
+</div>
+<div class="agent-name">Monthly Physical Events</div>
+<div class="agent-desc">Plans quarterly workshop agenda and monthly physical event programs. Finds sponsors and partners.</div>
+<div class="agent-tasks">
+<div class="task-item"><span class="task-icon">📅</span> 1 physical event/month <span class="cron-tag">0 9 1 * *</span></div>
+<div class="task-item"><span class="task-icon">🤝</span> Partner/sponsor outreach</div>
+<div class="task-item"><span class="task-icon">🎨</span> Event flier design</div>
+</div>
+</div>
+</div>
+</div>
+<!-- WTM -->
+<div id="tab-wtm" class="tab-content">
+<div class="agent-grid">
+<div class="agent-card fade-in" style="--c: #c084fc">
+<div class="agent-card-accent" style="background:#c084fc"></div>
+<div class="agent-header">
+<div class="agent-channel" style="background:rgba(192,132,252,0.07);border-color:rgba(192,132,252,0.2);color:#c084fc">#wtmeket-agent</div>
+<div class="agent-badge badge-cron">CRON</div>
+</div>
+<div class="agent-name">Social Content (3×/week)</div>
+<div class="agent-desc">Creates branded WTM Eket posts across all platforms Mon/Wed/Fri with unique community fliers.</div>
+<div class="agent-tasks">
+<div class="task-item"><span class="task-icon">🐦</span> Twitter, FB, IG, LinkedIn <span class="cron-tag">0 8 * * 1,3,5</span></div>
+<div class="task-item"><span class="task-icon">🎨</span> WTM-branded flier each post</div>
+</div>
+</div>
+<div class="agent-card fade-in" style="--c: #c084fc">
+<div class="agent-card-accent" style="background:#c084fc"></div>
+<div class="agent-header">
+<div class="agent-channel" style="background:rgba(192,132,252,0.07);border-color:rgba(192,132,252,0.2);color:#c084fc">#wtmeket-events-agent</div>
+<div class="agent-badge badge-cron">CRON</div>
+</div>
+<div class="agent-name">Monthly Physical Events</div>
+<div class="agent-desc">Plans quarterly workshop agenda and monthly physical event programs. Finds sponsors and partners.</div>
+<div class="agent-tasks">
+<div class="task-item"><span class="task-icon">📅</span> 1 physical event/month <span class="cron-tag">0 9 1 * *</span></div>
+<div class="task-item"><span class="task-icon">🤝</span> Partner/sponsor outreach</div>
+<div class="task-item"><span class="task-icon">🎨</span> Program flier design</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ETHAKWAIBOM -->
+<div id="tab-eth" class="tab-content">
+<div class="agent-grid">
+<div class="agent-card fade-in" style="--c: #60a5fa">
+<div class="agent-card-accent" style="background:#60a5fa"></div>
+<div class="agent-header">
+<div class="agent-channel" style="background:rgba(96,165,250,0.07);border-color:rgba(96,165,250,0.2);color:#60a5fa">#ethakwaibom-agent</div>
+<div class="agent-badge badge-cron">CRON</div>
+</div>
+<div class="agent-name">Weekly Twitter Space</div>
+<div class="agent-desc">Scans Ethereum/web3 news weekly. Proposes space topic, suggests speakers, designs flier.</div>
+<div class="agent-tasks">
+<div class="task-item"><span class="task-icon">🔍</span> Latest ETH/web3 updates <span class="cron-tag">0 10 * * 3</span></div>
+<div class="task-item"><span class="task-icon">🎙️</span> Speaker suggestions + contact</div>
+<div class="task-item"><span class="task-icon">🎨</span> Twitter Space flier</div>
+</div>
+</div>
+<div class="agent-card fade-in" style="--c: #60a5fa">
+<div class="agent-card-accent" style="background:#60a5fa"></div>
+<div class="agent-header">
+<div class="agent-channel" style="background:rgba(96,165,250,0.07);border-color:rgba(96,165,250,0.2);color:#60a5fa">#ethakwaibom-social-agent</div>
+<div class="agent-badge badge-cron">CRON</div>
+</div>
+<div class="agent-name">Social Content (3×/week)</div>
+<div class="agent-desc">Blockchain/Ethereum focused content for Twitter, Facebook, and LinkedIn Mon/Wed/Fri.</div>
+<div class="agent-tasks">
+<div class="task-item"><span class="task-icon">⟠</span> ETH/Web3 focused content <span class="cron-tag">0 8 * * 1,3,5</span></div>
+<div class="task-item"><span class="task-icon">🎨</span> Community-branded flier</div>
+</div>
+</div>
+<div class="agent-card fade-in" style="--c: #60a5fa">
+<div class="agent-card-accent" style="background:#60a5fa"></div>
+<div class="agent-header">
+<div class="agent-channel" style="background:rgba(96,165,250,0.07);border-color:rgba(96,165,250,0.2);color:#60a5fa">#ethakwaibom-events-agent</div>
+<div class="agent-badge badge-cron">CRON</div>
+</div>
+<div class="agent-name">Monthly Physical Events</div>
+<div class="agent-desc">Monthly blockchain/Ethereum workshop planning. Sponsor outreach, program design.</div>
+<div class="agent-tasks">
+<div class="task-item"><span class="task-icon">📅</span> 1 physical event/month <span class="cron-tag">0 9 1 * *</span></div>
+<div class="task-item"><span class="task-icon">🤝</span> Partner/sponsor outreach</div>
+<div class="task-item"><span class="task-icon">🎨</span> Program flier design</div>
+</div>
+</div>
+</div>
+</div>
+<!-- WEEKLY SCHEDULE -->
+<div class="section-header">
+<span class="section-tag">Schedule</span>
+<span class="section-title">Weekly Automation View</span>
+<div class="section-line"></div>
+</div>
+<div class="week-view">
+<div class="week-grid">
+<div></div>
+<div class="week-header">MON</div>
+<div class="week-header">TUE</div>
+<div class="week-header">WED</div>
+<div class="week-header">THU</div>
+<div class="week-header">FRI</div>
+<div class="week-header">SAT</div>
+<div class="week-header">SUN</div>
+  <!-- 8AM -->
+  <div class="week-label">8:00 AM</div>
+  <div class="week-cell"><div class="week-event ev-social">Personal Social</div><div class="week-event ev-community">AfricI Social</div></div>
+  <div class="week-cell"><div class="week-event ev-social">Personal Social</div></div>
+  <div class="week-cell"><div class="week-event ev-social">Personal Social</div><div class="week-event ev-community">AfricI Social</div></div>
+  <div class="week-cell"><div class="week-event ev-social">Personal Social</div></div>
+  <div class="week-cell"><div class="week-event ev-social">Personal Social</div><div class="week-event ev-community">AfricI Social</div></div>
+  <div class="week-cell"><div class="week-event ev-social">Personal Social</div></div>
+  <div class="week-cell"><div class="week-event ev-social">Personal Social</div></div>
+
+  <!-- 7AM blogs/youtube -->
+  <div class="week-label">7:00 AM</div>
+  <div class="week-cell"><div class="week-event ev-content">Blog Draft</div><div class="week-event ev-content">YouTube Plan</div></div>
+  <div class="week-cell"></div>
+  <div class="week-cell"><div class="week-event ev-community">GDG Social</div><div class="week-event ev-community">WTM Social</div><div class="week-event ev-community">ETH Social</div></div>
+  <div class="week-cell"><div class="week-event ev-content">YouTube Plan</div></div>
+  <div class="week-cell"><div class="week-event ev-community">GDG Social</div><div class="week-event ev-community">WTM Social</div><div class="week-event ev-community">ETH Social</div></div>
+  <div class="week-cell"></div>
+  <div class="week-cell"></div>
+
+  <!-- 9AM outreach -->
+  <div class="week-label">9:00 AM</div>
+  <div class="week-cell"><div class="week-event ev-partner">Partnerships ×4</div><div class="week-event ev-job">Job Search</div></div>
+  <div class="week-cell"><div class="week-event ev-partner">Partnerships ×4</div><div class="week-event ev-job">Job Search</div></div>
+  <div class="week-cell"><div class="week-event ev-partner">Partnerships ×4</div><div class="week-event ev-job">Job Search</div></div>
+  <div class="week-cell"><div class="week-event ev-partner">Partnerships ×4</div><div class="week-event ev-job">Job Search</div></div>
+  <div class="week-cell"><div class="week-event ev-partner">Partnerships ×4</div><div class="week-event ev-job">Job Search</div></div>
+  <div class="week-cell"></div>
+  <div class="week-cell"></div>
+
+  <!-- 10AM ETH Space -->
+  <div class="week-label">10:00 AM</div>
+  <div class="week-cell"><div class="week-event ev-community">GDG Social</div><div class="week-event ev-community">WTM Social</div><div class="week-event ev-community">ETH Social</div></div>
+  <div class="week-cell"></div>
+  <div class="week-cell"><div class="week-event ev-news">ETH Twitter Space</div></div>
+  <div class="week-cell"></div>
+  <div class="week-cell"></div>
+  <div class="week-cell"></div>
+  <div class="week-cell"></div>
+</div>
+</div>
+<!-- CRON SCHEDULE TABLE -->
+<div class="section-header">
+<span class="section-tag">Cron Jobs</span>
+<span class="section-title">Full Schedule Reference</span>
+<div class="section-line"></div>
+</div>
+<div class="schedule-table">
+<table>
+<thead>
+<tr>
+<th>Job Name</th>
+<th>Channel</th>
+<th>Cron Expression</th>
+<th>Frequency</th>
+<th>Time (WAT)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Personal Daily Social</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px">#personal-social-agent</td>
+<td><span class="cron-code">0 8 * * *</span></td>
+<td><span class="freq-badge freq-daily">📅 Daily</span></td>
+<td>8:00 AM</td>
+</tr>
+<tr>
+<td>Daily Job Search</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px">#job-application-agent</td>
+<td><span class="cron-code">0 9 * * *</span></td>
+<td><span class="freq-badge freq-daily">📅 Daily</span></td>
+<td>9:00 AM</td>
+</tr>
+<tr>
+<td>Weekly Blog Post</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px">#technical-writing-agent</td>
+<td><span class="cron-code">0 7 * * 1</span></td>
+<td><span class="freq-badge freq-weekly">📆 Weekly (Mon)</span></td>
+<td>7:00 AM</td>
+</tr>
+<tr>
+<td>YouTube Content Plan</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px">#youtube-content-agent</td>
+<td><span class="cron-code">0 7 * * 1,4</span></td>
+<td><span class="freq-badge freq-twice\">✌️ 2×/week</span></td>
+<td>7:00 AM</td>
+</tr>
+<tr>
+<td>Africinnovate Partnerships ×4</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#africinnovate-agents</td>
+<td><span class="cron-code\">0 9 * * 1-5</span></td>
+<td><span class="freq-badge freq-daily\">📅 Weekdays</span></td>
+<td>9:00 AM</td>
+</tr>
+<tr>
+<td>Africinnovate Social</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#africinnovate-social-agent</td>
+<td><span class="cron-code\">0 8 * * 1,3,5</span></td>
+<td><span class="freq-badge freq-3x\">🔁 3×/week</span></td>
+<td>8:00 AM</td>
+</tr>
+<tr>
+<td>GDG Eket Social</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#gdgeket-agent</td>
+<td><span class="cron-code\">0 8 * * 1,3,5</span></td>
+<td><span class="freq-badge freq-3x\">🔁 3×/week</span></td>
+<td>8:00 AM</td>
+</tr>
+<tr>
+<td>WTM Eket Social</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#wtmeket-agent</td>
+<td><span class="cron-code\">0 8 * * 1,3,5</span></td>
+<td><span class="freq-badge freq-3x\">🔁 3×/week</span></td>
+<td>8:00 AM</td>
+</tr>
+<tr>
+<td>EthAkwaIbom Social</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#ethakwaibom-social-agent</td>
+<td><span class="cron-code\">0 8 * * 1,3,5</span></td>
+<td><span class="freq-badge freq-3x\">🔁 3×/week</span></td>
+<td>8:00 AM</td>
+</tr>
+<tr>
+<td>ETH Twitter Space Topic</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#ethakwaibom-agent</td>
+<td><span class="cron-code\">0 10 * * 3</span></td>
+<td><span class="freq-badge freq-weekly\">📆 Weekly (Wed)</span></td>
+<td>10:00 AM</td>
+</tr>
+<tr>
+<td>PhD Applications</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#phd-application-agent</td>
+<td><span class="cron-code\">0 9 1 * *</span></td>
+<td><span class="freq-badge freq-monthly\">📅 Monthly (1st)</span></td>
+<td>9:00 AM</td>
+</tr>
+<tr>
+<td>Monthly Events (×4 orgs)</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#events-agents</td>
+<td><span class="cron-code\">0 9 1 * *</span></td>
+<td><span class="freq-badge freq-monthly\">📅 Monthly (1st)</span></td>
+<td>9:00 AM</td>
+</tr>
+<tr>
+<td>Africinnovate Newsletter</td>
+<td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:12px\">#africinnovate-events-agent</td>
+<td><span class="cron-code\">0 9 1 * *</span></td>
+<td><span class="freq-badge freq-monthly\">📅 Monthly (1st)</span></td>
+<td>9:00 AM</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- HEARTBEAT -->
+<div class="section-header">
+<span class="section-tag">Heartbeat</span>
+<span class="section-title">30-Min Monitoring Loop</span>
+<div class="section-line"></div>
+</div>
+<div class="heartbeat-card">
+<div class="heartbeat-title">
+<div class="heartbeat-icon">💓</div>
+HEARTBEAT.md Checklist
+</div>
+<div class="heartbeat-sub">Runs every 30 minutes. Batches all monitoring into a single session. Stops immediately if nothing needs attention.</div>
+<div class="checklist">
+<div class="check-item"><div class="check-num">1</div> Check for any outreach drafts awaiting Glory's ✅ review in partnership channels</div>
+<div class="check-item"><div class="check-num">2</div> Check for job application responses or follow-ups due</div>
+<div class="check-item"><div class="check-num">3</div> Check calendar for events in the next 24 hours</div>
+<div class="check-item"><div class="check-num">4</div> Surface any urgent emails or DMs requiring action</div>
+<div class="check-item"><div class="check-num">5</div> If nothing needs attention → reply <code style="font-family:'DM Mono',monospace;color:var(--accent4);font-size:11px\">HEARTBEAT_OK</code> and stop</div>
+</div>
+</div>
+<!-- APPROVAL FLOW -->
+<div class="section-header">
+<span class="section-tag">Review Flow</span>
+<span class="section-title">Proposal Approval Pipeline</span>
+<div class="section-line"></div>
+</div>
+<div class="flow-card">
+<div class="flow-steps">
+<div class="flow-step">
+<div class="flow-circle" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3)\">🔍</div>
+<div class="flow-step-label">Agent Searches</div>
+<div class="flow-step-sub\">10 leads found daily via web search</div>
+</div>
+<div class="flow-step">
+<div class="flow-circle" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3)\">📝</div>
+<div class="flow-step-label">Draft Created</div>
+<div class="flow-step-sub\">Proposal drafted + Google Doc created</div>
+</div>
+<div class="flow-step">
+<div class="flow-circle" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3)\">📤</div>
+<div class="flow-step-label">Shared for Review</div>
+<div class="flow-step-sub\">Draft posted in Discord channel</div>
+</div>
+<div class="flow-step">
+<div class="flow-circle" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3)\">✅</div>
+<div class="flow-step-label">Glory Approves</div>
+<div class="flow-step-sub\">React ✅ or reply "send it"</div>
+</div>
+<div class="flow-step">
+<div class="flow-circle" style="background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.3)\">📧</div>
+<div class="flow-step-label">Sent as PDF</div>
+<div class="flow-step-sub\">Emailed to lead + spreadsheet updated</div>
+</div>
+</div>
+</div>
+<!-- MEMORY / FILES -->
+<div class="section-header">
+<span class="section-tag">Config Files</span>
+<span class="section-title">Agent Memory & Instructions</span>
+<div class="section-line"></div>
+</div>
+<div class="files-grid">
+<div class="file-card">
+<div class="file-icon">🧠</div>
+<div class="file-name">AGENTS.md</div>
+<div class="file-desc">Your bio, brand voice, social handles, org descriptions, and tone guidelines injected into every session.</div>
+</div>
+<div class="file-card">
+<div class="file-icon">💾</div>
+<div class="file-name">MEMORY.md</div>
+<div class="file-desc">CV/profile, Africinnovate services, community bios, contacted leads list, brand guidelines per org.</div>
+</div>
+<div class="file-card">
+<div class="file-icon">💓</div>
+<div class="file-name">HEARTBEAT.md</div>
+<div class="file-desc">5-item monitoring checklist. Runs every 30 minutes. Stops with HEARTBEAT_OK if nothing is actionable.</div>
+</div>
+<div class="file-card">
+<div class="file-icon">👤</div>
+<div class="file-name">USER.md</div>
+<div class="file-desc">Personal preferences, approval workflow rules, review-before-send policy for all proposal channels.</div>
+</div>
+</div>
+</main>
+<script>
+// Date
+const now = new Date();
+document.getElementById('date-label').textContent = now.toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
+// Tabs
+function switchTab(id) {
+document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+document.getElementById('tab-' + id).classList.add('active');
+event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
